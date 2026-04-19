@@ -5,56 +5,70 @@ A lightweight CLI for managing environment variable sets across multiple deploym
 ## Installation
 
 ```bash
-go install github.com/yourusername/envoy-cli@latest
-```
-
-Or download a pre-built binary from the [releases page](https://github.com/yourusername/envoy-cli/releases).
-
-## Usage
-
-```bash
-# Initialize a new envoy config in the current directory
-envoy init
-
-# Add an environment variable to a target
-envoy set production DATABASE_URL=postgres://user:pass@host/db
-
-# List all variables for a target
-envoy list production
-
-# Apply variables to a deployment target
-envoy apply production
-
-# Copy variables from one target to another
-envoy copy staging production
-```
-
-### Example Config (`envoy.yaml`)
-
-```yaml
-targets:
-  production:
-    DATABASE_URL: postgres://user:pass@prod-host/db
-    API_KEY: your-api-key
-  staging:
-    DATABASE_URL: postgres://user:pass@staging-host/db
-    API_KEY: staging-api-key
+go install github.com/your-org/envoy-cli@latest
 ```
 
 ## Commands
 
-| Command | Description |
-|---|---|
-| `init` | Initialize a new envoy config |
-| `set <target> <KEY=VALUE>` | Set a variable for a target |
-| `list <target>` | List all variables for a target |
-| `apply <target>` | Apply variables to a target |
-| `copy <src> <dst>` | Copy variables between targets |
+### `init`
+Initialise a new `.envoy.json` config file in the current directory.
+```bash
+envoy init
+```
 
-## Contributing
+### `target`
+Manage deployment targets.
+```bash
+envoy target list
+envoy target add <name>
+envoy target remove <name>
+envoy target rename <old> <new>
+```
 
-Pull requests are welcome. For major changes, please open an issue first.
+### `env`
+Manage environment variables per target.
+```bash
+envoy env set <target> <key> <value>
+envoy env get <target> <key>
+envoy env delete <target> <key>
+envoy env list <target>
+```
 
-## License
+### `diff`
+Compare environment variables between two targets.
+```bash
+envoy diff <target1> <target2>
+```
 
-[MIT](LICENSE)
+### `copy`
+Copy or merge environment variables between targets.
+```bash
+envoy copy <src> <dest>
+envoy copy --merge <src> <dest>
+```
+
+### `snapshot`
+Save and restore point-in-time snapshots of a target's variables.
+```bash
+envoy snapshot create <target> <name>
+envoy snapshot list <target>
+envoy snapshot restore <target> <name>
+```
+
+### `export`
+Export environment variables for a target in various formats.
+```bash
+# Print to stdout (default: dotenv)
+envoy export <target>
+
+# Choose format: dotenv | shell | json
+envoy export <target> --format shell
+envoy export <target> --format json
+
+# Write directly to a file
+envoy export <target> --format dotenv --out .env
+```
+
+## Config file
+
+All data is stored in `.envoy.json` in the working directory.
