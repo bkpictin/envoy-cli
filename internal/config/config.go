@@ -1,42 +1,41 @@
 package config
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
+
+	"gopkg.in/yaml.v3"
 )
 
-// Config holds all targets and their environment variable maps.
-type Config struct {
-	Targets map[string]map[string]string `json:"targets"`
-}
+const filename = ".envoy.yaml"
 
-// DefaultPath returns the default config file path.
+// DefaultPath returns the default config file path in the current directory.
 func DefaultPath() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return ".envoy.json"
-	}
-	return filepath.Join(home, ".envoy.json")
+	return filepath.Join(".", filename)
 }
 
-// Init creates a new empty config file at path if it does not exist.
+// Config holds all targets, their env vars, and snapshots.
+type Config struct {
+	Targets   map[string]map[string]string       `yaml:"targets"`
+	Snapshots map[string][]interface{}            `yaml:"snapshots,omitempty"`
+}
+
+// Init creates a new empty config file at path.
 func Init(path string) error {
-	if _, err := os.Stat(path); err == nil {
-		return nil
+	cfg := &Config{
+		Targets: make(map[string]map[string]string),
 	}
-	cfg := &Config{Targets: make(map[string]map[string]string)}
-	return Save(cfg, path)
+	return Save(path, cfg)
 }
 
-// Load reads and parses the config from path.
+// Load reads and parses the config file at path.
 func Load(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 	var cfg Config
-	if err := json.Unmarshal(data, &cfg); err != nil {
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, err
 	}
 	if cfg.Targets == nil {
@@ -45,11 +44,11 @@ func Load(path string) (*Config, error) {
 	return &cfg, nil
 }
 
-// Save serialises cfg to path with indented JSON.
-func Save(cfg *Config, path string) error {
-	data, err := json.MarshalIndent(cfg, "", "  ")
+// Save writes the config to disk at path.
+func Save(path string, cfg *Config) error {
+	data, err := yaml.Marshal(cfg)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, data, 0o600)
+	return os.WriteFile(path, data, 0644)
 }
