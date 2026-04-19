@@ -5,58 +5,50 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/envoy-cli/envoy/internal/config"
+	"github.com/envoy-cli/envoy-cli/internal/config"
 )
 
 func TestSaveAndLoad(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, ".envoy.yaml")
+	path := filepath.Join(dir, "envoy.json")
 
 	cfg := &config.Config{
-		Version: "1",
-		Targets: map[string]config.Target{
-			"production": {
-				Description: "prod env",
-				Env: map[string]string{"APP_ENV": "production", "PORT": "8080"},
-			},
+		Targets: map[string]map[string]string{
+			"dev": {"FOO": "bar"},
 		},
 	}
-
-	if err := config.Save(path, cfg); err != nil {
-		t.Fatalf("Save() error: %v", err)
+	if err := config.Save(cfg, path); err != nil {
+		t.Fatal(err)
 	}
 
 	loaded, err := config.Load(path)
 	if err != nil {
-		t.Fatalf("Load() error: %v", err)
+		t.Fatal(err)
 	}
-
-	if loaded.Version != cfg.Version {
-		t.Errorf("version mismatch: got %q want %q", loaded.Version, cfg.Version)
-	}
-
-	prod, ok := loaded.Targets["production"]
-	if !ok {
-		t.Fatal("expected production target")
-	}
-	if prod.Env["APP_ENV"] != "production" {
-		t.Errorf("APP_ENV mismatch: got %q", prod.Env["APP_ENV"])
+	if loaded.Targets["dev"]["FOO"] != "bar" {
+		t.Fatalf("expected bar, got %s", loaded.Targets["dev"]["FOO"])
 	}
 }
 
 func TestInit(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, ".envoy.yaml")
+	path := filepath.Join(dir, "envoy.json")
 
 	if err := config.Init(path); err != nil {
-		t.Fatalf("Init() error: %v", err)
+		t.Fatal(err)
 	}
-
 	if _, err := os.Stat(path); err != nil {
-		t.Fatalf("expected config file to exist: %v", err)
+		t.Fatal("config file not created")
 	}
 
-	if err := config.Init(path); err == nil {
-		t.Error("expected error when calling Init() on existing file")
+	// calling Init again should not overwrite
+	cfg, _ := config.Load(path)
+	cfg.Targets["prod"] = map[string]string{"X": "1"}
+	_ = config.Save(cfg, path)
+
+	_ = config.Init(path)
+	reloaded, _ := config.Load(path)
+	if _, ok := reloaded.Targets["prod"]; !ok {
+		t.Fatal("Init overwrote existing config")
 	}
 }
