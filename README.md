@@ -53,6 +53,7 @@ Save and restore point-in-time snapshots of a target's variables.
 envoy snapshot create <target> <name>
 envoy snapshot list <target>
 envoy snapshot restore <target> <name>
+envoy snapshot delete <target> <name>
 ```
 
 ### `export`
@@ -67,6 +68,19 @@ envoy export <target> --format json
 
 # Write directly to a file
 envoy export <target> --format dotenv --out .env
+```
+
+### `import`
+Import environment variables into a target from a file.
+```bash
+# Import from a .env file (default format: dotenv)
+envoy import <target> --in .env
+
+# Specify format: dotenv | json
+envoy import <target> --format json --in vars.json
+
+# Merge with existing variables instead of overwriting
+envoy import <target> --merge --in .env
 ```
 
 ## Config file
