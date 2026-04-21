@@ -15,6 +15,11 @@ type Result struct {
 	Unchanged map[string]string
 }
 
+// HasDifferences returns true if there are any differences between the two targets.
+func (r *Result) HasDifferences() bool {
+	return len(r.OnlyInA) > 0 || len(r.OnlyInB) > 0 || len(r.Changed) > 0
+}
+
 // Targets compares environment variables of two targets within a config.
 func Targets(cfg *config.Config, targetA, targetB string) (*Result, error) {
 	envA, ok := cfg.Targets[targetA]
