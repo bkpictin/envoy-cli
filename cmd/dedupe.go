@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -29,11 +30,7 @@ or configuration that could be consolidated.`,
 			result := dedupe.FindCrossTarget(cfg)
 
 			if jsonOut {
-				for _, m := range result.Matches {
-					fmt.Fprintf(os.Stdout, `{"key":%q,"value":%q,"targets":%q}`+"\n",
-						m.Key, m.Value, m.Targets)
-				}
-				return nil
+				return writeJSONLines(result.Matches)
 			}
 
 			fmt.Print(dedupe.Format(result))
@@ -45,4 +42,16 @@ or configuration that could be consolidated.`,
 	dedupeCmd.Flags().BoolVar(&jsonOut, "json", false, "output results as JSON lines")
 
 	rootCmd.AddCommand(dedupeCmd)
+}
+
+// writeJSONLines encodes each match as a JSON object and writes it to stdout,
+// one object per line (JSON Lines format).
+func writeJSONLines(matches []dedupe.Match) error {
+	enc := json.NewEncoder(os.Stdout)
+	for _, m := range matches {
+		if err := enc.Encode(m); err != nil {
+			return fmt.Errorf("encode match: %w", err)
+		}
+	}
+	return nil
 }
