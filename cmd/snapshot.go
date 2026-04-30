@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/spf13/cobra"
 	"github.com/user/envoy-cli/internal/config"
@@ -72,8 +73,11 @@ func init() {
 				fmt.Fprintln(os.Stderr, "error:", err)
 				os.Exit(1)
 			}
-			var idx int
-			fmt.Sscanf(args[1], "%d", &idx)
+			idx, err := strconv.Atoi(args[1])
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "error: invalid index %q: must be a non-negative integer\n", args[1])
+				os.Exit(1)
+			}
 			if err := snapshot.Restore(cfg, args[0], idx); err != nil {
 				fmt.Fprintln(os.Stderr, "error:", err)
 				os.Exit(1)
